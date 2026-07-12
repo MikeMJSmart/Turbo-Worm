@@ -146,7 +146,7 @@ class AudioSystem {
     this.masterGain = this.ctx.createGain();
     this.masterGain.gain.value = 0.7;
     this.masterGain.connect(this.ctx.destination);
-    this.music = new Audio('./music/Doomfire.mp3');
+    this.music = new window.Audio('./music/Doomfire.mp3');
     this.music.loop = true;
     this.music.preload = 'auto';
     this.music.volume = 0.55;
