@@ -136,6 +136,7 @@ class AudioSystem {
     this.ctx = null;
     this.music = null;
     this.musicRequested = false;
+    this.musicUnlocked = false;
     this.muted = false;
     this.masterGain = null;
   }
@@ -152,6 +153,27 @@ class AudioSystem {
     this.music.muted = this.muted;
   }
   resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
+
+  unlockMusic() {
+    if (!this.music || this.musicUnlocked) return;
+    const playPromise = this.music.play();
+    if (playPromise) {
+      playPromise.then(() => {
+        this.musicUnlocked = true;
+        if (!this.musicRequested) {
+          this.music.pause();
+          this.music.currentTime = 0;
+        }
+      }).catch((error) => console.error('Doomfire music unlock failed:', error));
+    } else {
+      // Older browsers may not return a Promise from play().
+      this.musicUnlocked = true;
+      if (!this.musicRequested) {
+        this.music.pause();
+        this.music.currentTime = 0;
+      }
+    }
+  }
 
   sfx(freq = 440, duration = 0.12, type = 'square', opts = {}) {
     if (!this.ctx || this.muted) return;
@@ -208,7 +230,7 @@ class AudioSystem {
     this.musicRequested = true;
     if (!this.music || this.muted || !this.music.paused) return;
     const playPromise = this.music.play();
-    if (playPromise) playPromise.catch((error) => console.warn('Gameplay music could not start:', error));
+    if (playPromise) playPromise.catch((error) => console.error('Doomfire gameplay music could not start:', error));
   }
   stopMusic() {
     this.musicRequested = false;
@@ -221,7 +243,7 @@ class AudioSystem {
       this.music.muted = this.muted;
       if (!this.muted && this.musicRequested && this.music.paused) {
         const playPromise = this.music.play();
-        if (playPromise) playPromise.catch((error) => console.warn('Gameplay music could not resume:', error));
+        if (playPromise) playPromise.catch((error) => console.error('Doomfire gameplay music could not resume:', error));
       }
     }
     return this.muted;
@@ -1613,6 +1635,7 @@ function drawButton(ctx, x, y, w, h, label, hover) {
   function startAudioAndGame() {
     Audio.init();
     Audio.resume();
+    Audio.unlockMusic();
     gate.style.display = 'none';
     started = true;
   }
