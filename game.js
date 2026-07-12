@@ -130,12 +130,12 @@ const Input = {
   pausePressed() { return this.wasPressed('Escape') || this.wasPressed('KeyP'); },
 };
 
-// ---------- Audio (Web Audio API procedural, per game.md guidance) ----------
+// ---------- Audio (Web Audio API sound effects + MP3 background music) ----------
 class AudioSystem {
   constructor() {
     this.ctx = null;
-    this.musicNodes = [];
-    this.musicTimer = null;
+    this.music = null;
+    this.musicRequested = false;
     this.muted = false;
     this.masterGain = null;
   }
@@ -145,6 +145,11 @@ class AudioSystem {
     this.masterGain = this.ctx.createGain();
     this.masterGain.gain.value = 0.7;
     this.masterGain.connect(this.ctx.destination);
+    this.music = new Audio('./music/Doomfire.mp3');
+    this.music.loop = true;
+    this.music.preload = 'auto';
+    this.music.volume = 0.55;
+    this.music.muted = this.muted;
   }
   resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
 
@@ -198,56 +203,27 @@ class AudioSystem {
   }
   playMenuSelect() { this.sfx(520, 0.06, 'square', { vol: 0.18 }); }
 
-  // ---- Procedural chiptune-ish music loop per level ----
-  startMusic(levelIndex) {
-    this.stopMusic();
-    if (!this.ctx || this.muted) return;
-    const scales = [
-      [196, 220, 262, 294, 330, 392], // junkyard - G major-ish, gritty
-      [174, 196, 233, 261, 311, 349], // swamp - murky minor
-      [220, 262, 294, 330, 392, 440], // factory - bright driving
-    ];
-    const scale = scales[levelIndex % scales.length];
-    const tempo = 0.24; // seconds per step
-    let step = 0;
-    const bassOsc = this.ctx.createOscillator();
-    const bassGain = this.ctx.createGain();
-    bassOsc.type = 'triangle';
-    bassGain.gain.value = 0.09;
-    bassOsc.connect(bassGain).connect(this.masterGain);
-    bassOsc.start();
-    this.musicNodes.push(bassOsc);
-
-    const playStep = () => {
-      if (!this.ctx || this.muted) return;
-      const note = scale[step % scale.length];
-      // lead blip
-      const lead = this.ctx.createOscillator();
-      const leadGain = this.ctx.createGain();
-      lead.type = step % 4 === 0 ? 'square' : 'triangle';
-      lead.frequency.value = note * (step % 8 === 4 ? 2 : 1);
-      leadGain.gain.setValueAtTime(0.06, this.ctx.currentTime);
-      leadGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + tempo * 0.9);
-      lead.connect(leadGain).connect(this.masterGain);
-      lead.start();
-      lead.stop(this.ctx.currentTime + tempo);
-      // bass follows root every 4 steps
-      if (step % 4 === 0) {
-        bassOsc.frequency.setTargetAtTime(scale[0] / 2, this.ctx.currentTime, 0.02);
-      }
-      step++;
-    };
-    playStep();
-    this.musicTimer = setInterval(playStep, tempo * 1000);
+  // ---- Looping gameplay music (created after the gesture gate unlocks audio) ----
+  startMusic() {
+    this.musicRequested = true;
+    if (!this.music || this.muted || !this.music.paused) return;
+    const playPromise = this.music.play();
+    if (playPromise) playPromise.catch((error) => console.warn('Gameplay music could not start:', error));
   }
   stopMusic() {
-    if (this.musicTimer) { clearInterval(this.musicTimer); this.musicTimer = null; }
-    this.musicNodes.forEach((n) => { try { n.stop(); } catch (e) {} });
-    this.musicNodes = [];
+    this.musicRequested = false;
+    if (this.music && !this.music.paused) this.music.pause();
   }
   toggleMute() {
     this.muted = !this.muted;
     if (this.masterGain) this.masterGain.gain.value = this.muted ? 0 : 0.7;
+    if (this.music) {
+      this.music.muted = this.muted;
+      if (!this.muted && this.musicRequested && this.music.paused) {
+        const playPromise = this.music.play();
+        if (playPromise) playPromise.catch((error) => console.warn('Gameplay music could not resume:', error));
+      }
+    }
     return this.muted;
   }
 }
