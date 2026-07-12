@@ -1,0 +1,377 @@
+/* ===== TURBO WORM — Design Tokens ===== */
+:root {
+  --font-display: 'Bungee', 'Space Grotesk', sans-serif;
+  --font-body: 'Space Grotesk', 'Segoe UI', sans-serif;
+
+  /* Core palette — junkyard purple / toxic green / neon action */
+  --color-bg: #0d0714;
+  --color-surface: rgba(20, 12, 32, 0.82);
+  --color-surface-2: rgba(32, 18, 48, 0.9);
+  --color-border: rgba(168, 230, 90, 0.35);
+  --color-text: #f2f0e8;
+  --color-text-muted: #b9b3c9;
+
+  --color-primary: #9be327;   /* toxic green - health/CTA */
+  --color-primary-hover: #7fc71a;
+  --color-primary-active: #6aa613;
+
+  --color-accent: #ff5fa2;    /* neon pink - factory theme */
+  --color-danger: #ff3b3b;    /* damage/health-low */
+  --color-warning: #ffb020;   /* ammo/energy */
+  --color-purple: #7a39bb;
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+  --text-2xl: 40px;
+  --text-3xl: 56px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --panel-blur: 10px;
+  --panel-radius: 10px;
+  --transition-ui: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  touch-action: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+#game-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #1a0f2b 0%, #05030a 100%);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
+  aspect-ratio: 16 / 9;
+  image-rendering: -webkit-optimize-contrast;
+  background: #0d0714;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* ===== Gesture gate (click to play) ===== */
+.overlay-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #05030a;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.gate-splash {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.55;
+  filter: saturate(1.1) brightness(0.6);
+}
+
+.gate-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8);
+  background: linear-gradient(180deg, rgba(10,6,18,0.2) 0%, rgba(10,6,18,0.85) 60%, rgba(10,6,18,0.95) 100%);
+  border-radius: var(--panel-radius);
+  text-align: center;
+}
+
+.game-logo {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  color: var(--color-primary);
+  text-shadow:
+    4px 4px 0 #ff5fa2,
+    0 0 24px rgba(155,227,39,0.6);
+  letter-spacing: 2px;
+}
+
+.game-subtitle {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-lg);
+  color: var(--color-text);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+  letter-spacing: 1px;
+}
+
+.btn-primary {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  letter-spacing: 1px;
+  color: #0d0714;
+  background: var(--color-primary);
+  border: 3px solid #0d0714;
+  border-radius: var(--panel-radius);
+  padding: var(--space-3) var(--space-8);
+  box-shadow: 0 6px 0 var(--color-primary-active), 0 8px 18px rgba(0,0,0,0.5);
+  cursor: pointer;
+  transition: transform var(--transition-ui), box-shadow var(--transition-ui), background var(--transition-ui);
+  pointer-events: auto;
+}
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(2px);
+  box-shadow: 0 4px 0 var(--color-primary-active), 0 6px 14px rgba(0,0,0,0.5);
+}
+.btn-primary:active {
+  transform: translateY(6px);
+  box-shadow: 0 0 0 var(--color-primary-active);
+}
+
+.gate-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+/* ===== HTML UI overlay layer (menus that need real DOM, buttons etc.) ===== */
+.game-ui {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  font-family: var(--font-body);
+  color: var(--color-text);
+}
+.game-ui [data-interactive] {
+  pointer-events: auto;
+}
+
+.hud-value {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .game-logo { font-size: clamp(2rem, 9vw, 3rem); }
+}
+
+/* ===================================================================
+   MOBILE TOUCH CONTROLS + LANDSCAPE LOCK
+   =================================================================== */
+
+/* ----- Touch controls container -----
+   pointer-events: none on the container; pointer-events: auto on buttons.
+   Safe-area aware positioning for iPhone notch / home indicator. */
+.touch-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.touch-controls[hidden] { display: none; }
+
+.touch-zone {
+  position: absolute;
+  bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  pointer-events: none;
+}
+
+.touch-zone--left {
+  left: max(var(--space-4), env(safe-area-inset-left));
+}
+
+.touch-zone--right {
+  right: max(var(--space-4), env(safe-area-inset-right));
+  gap: var(--space-2);
+}
+
+.touch-btn {
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--font-display);
+  color: var(--color-text);
+  background: var(--color-surface-2);
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.04);
+  transition: transform 80ms ease, background 80ms ease, border-color 80ms ease;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.touch-btn:active,
+.touch-btn.is-pressed {
+  transform: scale(0.9);
+  background: var(--color-surface);
+  border-color: var(--color-primary);
+}
+
+/* Movement buttons — left/right, sized for thumb use */
+.touch-btn--move {
+  width: 64px;
+  height: 64px;
+  font-size: 26px;
+  color: var(--color-primary);
+  background: rgba(20, 12, 32, 0.65);
+}
+
+/* Action buttons — large circular, right side */
+.touch-btn--action {
+  width: 68px;
+  height: 68px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-align: center;
+  line-height: 1.1;
+}
+.touch-btn--jump {
+  width: 76px;
+  height: 76px;
+  font-size: 13px;
+  color: #0d0714;
+  background: var(--color-primary);
+  border-color: #0d0714;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5), 0 0 18px rgba(155,227,39,0.35);
+}
+.touch-btn--shoot {
+  color: var(--color-warning);
+  background: rgba(32, 18, 48, 0.75);
+  border-color: rgba(255,176,32,0.5);
+}
+.touch-btn--whip {
+  color: var(--color-accent);
+  background: rgba(32, 18, 48, 0.75);
+  border-color: rgba(255,95,162,0.5);
+}
+
+/* Stagger action buttons vertically so they don't overlap on narrow landscape screens */
+.touch-zone--right {
+  flex-direction: row;
+  align-items: flex-end;
+}
+
+/* ----- Rotate-device overlay ----- */
+.rotate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999; /* highest — sits above everything, including gesture gate */
+  background: #05030a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  text-align: center;
+}
+.rotate-overlay[hidden] { display: none; }
+
+.rotate-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: 420px;
+}
+
+.rotate-icon {
+  color: var(--color-primary);
+  filter: drop-shadow(0 0 16px rgba(155,227,39,0.5));
+  animation: rotate-hint 1.8s ease-in-out infinite;
+}
+
+@keyframes rotate-hint {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-90deg); }
+}
+
+.rotate-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 6vw, 2rem);
+  color: var(--color-primary);
+  letter-spacing: 1px;
+  text-shadow: 3px 3px 0 #ff5fa2, 0 0 20px rgba(155,227,39,0.5);
+}
+
+.rotate-subtitle {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.rotate-continue-btn {
+  margin-top: var(--space-2);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(255,255,255,0.3);
+  transition: color var(--transition-ui);
+  pointer-events: auto;
+}
+.rotate-continue-btn:hover,
+.rotate-continue-btn:active {
+  color: var(--color-primary);
+  text-decoration-color: var(--color-primary);
+}
+
+/* ----- Reflow: keep HUD/canvas clear of touch controls & safe areas on small landscape screens ----- */
+@media (max-height: 420px) {
+  .touch-btn--move { width: 56px; height: 56px; font-size: 20px; }
+  .touch-btn--action { width: 58px; height: 58px; font-size: 11px; }
+  .touch-btn--jump { width: 64px; height: 64px; font-size: 12px; }
+  .touch-zone { gap: var(--space-2); }
+  .touch-zone--right { gap: var(--space-2); }
+}

@@ -1,0 +1,13 @@
+TURBO WORM - IPHONE HOME SCREEN BUILD
+
+This is a Progressive Web App (PWA). It must be uploaded to an HTTPS website before iPhone installation.
+
+IPHONE SETUP
+1. Open the hosted game address in Safari.
+2. Tap the Share button.
+3. Tap Add to Home Screen.
+4. Tap Add.
+5. Open Turbo Worm from the new Home Screen icon.
+6. Turn the iPhone sideways and tap POWER ON.
+
+The service worker caches the game after the first successful load so it can reopen with limited or no internet.
